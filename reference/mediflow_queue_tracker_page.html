@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0f5ff;
+  --white:#ffffff;
+  --blue-deep:#1652cc;
+  --blue:#2563eb;
+  --blue-mid:#3b82f6;
+  --blue-light:#dbeafe;
+  --blue-soft:#eff6ff;
+  --blue-border:#bfdbfe;
+  --text1:#0f172a;
+  --text2:#475569;
+  --text3:#94a3b8;
+  --green:#16a34a;
+  --green-bg:#dcfce7;
+  --amber:#d97706;
+  --amber-bg:#fef3c7;
+  --red:#dc2626;
+  --red-bg:#fee2e2;
+  --navy:#0f1e3d;
+  --font:'Plus Jakarta Sans',sans-serif;
+  --mono:'DM Mono',monospace;
+  --sh:0 1px 3px rgba(37,99,235,0.08),0 4px 16px rgba(37,99,235,0.07);
+  --sh2:0 2px 8px rgba(37,99,235,0.09),0 8px 32px rgba(37,99,235,0.06);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh}
+
+nav{
+  background:rgba(255,255,255,0.72);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--blue-border);
+  padding:0 2.5rem;
+  display:flex;align-items:center;height:64px;gap:2rem;
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:10px;background:var(--blue);display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:20px;height:20px;fill:none;stroke:white;stroke-width:2;stroke-linecap:round}
+.logo-text{font-size:19px;font-weight:800;color:var(--text1);letter-spacing:-0.5px}
+.logo-text span{color:var(--blue)}
+.nav-links{display:flex;align-items:center;gap:2px;flex:1;margin-left:0.5rem}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:13.5px;font-weight:500;padding:6px 13px;border-radius:8px;transition:all 0.18s}
+.nav-links a:hover{color:var(--blue);background:var(--blue-soft)}
+.nav-links a.active{color:var(--blue-deep);background:var(--blue-light);font-weight:700}
+.nav-right{display:flex;align-items:center;gap:10px;margin-left:auto}
+.live-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--green-bg);border:1px solid #bbf7d0;font-size:11.5px;font-weight:700;color:var(--green);font-family:var(--mono)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.35}}
+.btn-book{padding:9px 20px;border-radius:10px;background:var(--blue);color:white;font-size:13.5px;font-weight:700;border:none;cursor:pointer;font-family:var(--font);box-shadow:0 4px 14px rgba(37,99,235,0.3);transition:all 0.18s}
+.btn-book:hover{background:var(--blue-deep);transform:translateY(-1px)}
+
+main{max-width:1360px;margin:0 auto;padding:2rem 2.5rem 4rem}
+
+.hero{border-radius:20px;overflow:hidden;background:var(--navy);margin-bottom:1.75rem;padding:2.75rem 3rem;position:relative;min-height:200px;display:flex;align-items:center;justify-content:space-between;gap:2rem}
+.hero-bg-ring{position:absolute;top:-60px;right:200px;width:280px;height:280px;border-radius:50%;border:50px solid rgba(255,255,255,0.04);pointer-events:none}
+.hero-bg-ring2{position:absolute;bottom:-80px;right:60px;width:220px;height:220px;border-radius:50%;border:36px solid rgba(255,255,255,0.035);pointer-events:none}
+.hero-left{position:relative;z-index:2}
+.hero-tag{font-size:10.5px;letter-spacing:2.5px;font-weight:700;text-transform:uppercase;color:#93c5fd;font-family:var(--mono);margin-bottom:12px}
+.hero-title{font-size:34px;font-weight:800;color:white;letter-spacing:-1.2px;line-height:1.15;margin-bottom:10px}
+.hero-title em{font-style:normal;color:#93c5fd}
+.hero-desc{font-size:14px;color:#bfdbfe;line-height:1.65;max-width:400px}
+.hero-search{position:relative;z-index:2;display:flex;flex-direction:column;gap:12px;min-width:380px}
+.search-label{font-size:11px;letter-spacing:1.5px;font-weight:700;color:#93c5fd;text-transform:uppercase;font-family:var(--mono)}
+.search-row{display:flex;gap:10px}
+.search-input{
+  flex:1;padding:13px 18px;border-radius:12px;
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.18);
+  color:white;font-size:14.5px;font-family:var(--font);font-weight:500;
+  outline:none;transition:all 0.18s;
+}
+.search-input::placeholder{color:rgba(255,255,255,0.4)}
+.search-input:focus{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.35)}
+.btn-track{padding:13px 24px;border-radius:12px;background:var(--blue);color:white;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:var(--font);white-space:nowrap;box-shadow:0 4px 16px rgba(37,99,235,0.45);transition:all 0.18s}
+.btn-track:hover{background:#1d4ed8;transform:translateY(-1px)}
+.search-hint{font-size:12px;color:rgba(255,255,255,0.4);font-family:var(--mono)}
+
+.section-label{font-size:11px;letter-spacing:1.5px;font-weight:700;text-transform:uppercase;color:var(--text3);font-family:var(--mono);margin-bottom:1rem}
+
+.token-dashboard{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem}
+.token-main-card{
+  background:white;border-radius:18px;border:1px solid var(--blue-border);
+  box-shadow:var(--sh2);padding:2rem;
+  display:flex;flex-direction:column;gap:1.5rem;
+}
+.tmc-top{display:flex;align-items:flex-start;justify-content:space-between}
+.tmc-hospital{font-size:20px;font-weight:800;color:var(--text1);letter-spacing:-0.5px}
+.tmc-sub{font-size:13px;color:var(--text2);margin-top:3px;display:flex;align-items:center;gap:6px}
+.dept-chip{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--blue-light);color:var(--blue-deep);font-family:var(--mono)}
+.status-live{font-size:11px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:5px}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.6s infinite}
+.tmc-tokens{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.token-box{padding:1.25rem 1.5rem;border-radius:14px}
+.tb-now{background:#f8faff;border:1px solid var(--blue-border)}
+.tb-yours{background:var(--blue);box-shadow:0 4px 20px rgba(37,99,235,0.28)}
+.tb-label{font-size:10.5px;letter-spacing:1.5px;font-weight:700;text-transform:uppercase;font-family:var(--mono);margin-bottom:6px}
+.tb-now .tb-label{color:var(--text3)}
+.tb-yours .tb-label{color:rgba(255,255,255,0.6)}
+.tb-num{font-size:38px;font-weight:800;letter-spacing:-2px;font-family:var(--mono);line-height:1}
+.tb-now .tb-num{color:var(--text1)}
+.tb-yours .tb-num{color:white}
+.tb-tag{font-size:11px;margin-top:4px;font-family:var(--mono)}
+.tb-now .tb-tag{color:var(--text3)}
+.tb-yours .tb-tag{color:rgba(255,255,255,0.55)}
+
+.eta-block{
+  background:var(--navy);border-radius:14px;padding:1.25rem 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.eta-left{}
+.eta-label{font-size:10.5px;letter-spacing:1.5px;font-weight:700;text-transform:uppercase;font-family:var(--mono);color:#93c5fd;margin-bottom:4px}
+.eta-val{font-size:30px;font-weight:800;color:white;letter-spacing:-1.5px;font-family:var(--mono)}
+.eta-sub{font-size:12px;color:#bfdbfe;margin-top:3px}
+.emerg-pill{background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.3);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:6px}
+.ep-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
+.ep-txt{font-size:12px;font-weight:700;color:#fca5a5;font-family:var(--mono)}
+
+.queue-progress{}
+.qp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.qp-title{font-size:13px;font-weight:700;color:var(--text1)}
+.qp-count{font-size:13px;font-weight:700;color:var(--blue);font-family:var(--mono)}
+.progress-track{height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;border-radius:10px;background:var(--blue);transition:width 0.5s}
+.qp-ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);font-family:var(--mono)}
+
+.side-cards{display:flex;flex-direction:column;gap:1.25rem}
+.dept-status-card{background:white;border-radius:18px;border:1px solid var(--blue-border);box-shadow:var(--sh2);overflow:hidden}
+.ds-head{padding:1.25rem 1.5rem;border-bottom:1px solid #f1f5ff;display:flex;align-items:center;justify-content:space-between}
+.ds-title{font-size:15px;font-weight:700;color:var(--text1)}
+.ds-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.ds-row{display:flex;align-items:center;justify-content:space-between;padding:13px 1.5rem;border-bottom:1px solid #f8faff}
+.ds-row:last-child{border-bottom:none}
+.dsr-left{display:flex;flex-direction:column;gap:2px}
+.dsr-name{font-size:13.5px;font-weight:700;color:var(--text1)}
+.dsr-sub{font-size:11px;color:var(--text2);font-family:var(--mono)}
+.dsr-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.dsr-wait{font-size:13px;font-weight:700;font-family:var(--mono)}
+.wt-r{color:var(--red)}.wt-a{color:var(--amber)}.wt-g{color:var(--green)}
+.crowd{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;font-family:var(--mono)}
+.cr-h{background:var(--red-bg);color:var(--red)}.cr-m{background:var(--amber-bg);color:var(--amber)}.cr-l{background:var(--green-bg);color:var(--green)}
+.cdot{width:5px;height:5px;border-radius:50%}
+.cdot-r{background:var(--red)}.cdot-a{background:var(--amber)}.cdot-g{background:var(--green)}
+
+.recent-card{background:white;border-radius:18px;border:1px solid var(--blue-border);box-shadow:var(--sh2);overflow:hidden}
+.rc-item{display:flex;align-items:center;gap:12px;padding:12px 1.5rem;border-bottom:1px solid #f8faff}
+.rc-item:last-child{border-bottom:none}
+.rc-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ri-b{background:var(--blue-light)}.ri-g{background:var(--green-bg)}.ri-a{background:var(--amber-bg)}
+.rc-title{font-size:13px;font-weight:700;color:var(--text1)}
+.rc-sub{font-size:11.5px;color:var(--text2)}
+.rc-time{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto;flex-shrink:0}
+
+.info-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:1.75rem}
+.info-card{background:white;border-radius:14px;border:1px solid var(--blue-border);box-shadow:var(--sh);padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:4px;transition:transform 0.18s}
+.info-card:hover{transform:translateY(-2px)}
+.ic-label{font-size:10.5px;letter-spacing:1.5px;font-weight:700;text-transform:uppercase;font-family:var(--mono);color:var(--text3)}
+.ic-val{font-size:26px;font-weight:800;font-family:var(--mono);color:var(--text1);letter-spacing:-1.5px;line-height:1.2}
+.ic-tag{font-size:12px;color:var(--text2)}
+
+.how-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:1.75rem}
+.how-card{background:white;border-radius:16px;border:1px solid var(--blue-border);box-shadow:var(--sh);padding:1.5rem 1.75rem}
+.hc-num{width:36px;height:36px;border-radius:10px;background:var(--blue);color:white;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;font-family:var(--mono);margin-bottom:1rem}
+.hc-title{font-size:15px;font-weight:700;color:var(--text1);margin-bottom:6px}
+.hc-desc{font-size:13px;color:var(--text2);line-height:1.6}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-mark">
+      <svg viewBox="0 0 20 20"><path d="M10 2v16M2 10h16"/><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke-width="1.5"/></svg>
+    </div>
+    <span class="logo-text">Medi<span>Flow</span> AI</span>
+  </a>
+  <div class="nav-links">
+    <a href="#">Home</a>
+    <a href="#">Dashboard</a>
+    <a href="#" class="active">Queue</a>
+    <a href="#">Bookings</a>
+    <a href="#">Emergency</a>
+    <a href="#">Hospitals</a>
+  </div>
+  <div class="nav-right">
+    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    <button class="btn-book">&#128197; Book Token</button>
+  </div>
+</nav>
+
+<main>
+
+  <div class="hero">
+    <div class="hero-bg-ring"></div>
+    <div class="hero-bg-ring2"></div>
+    <div class="hero-left">
+      <div class="hero-tag">&#9654; Live Tracking &nbsp;·&nbsp; Queue System</div>
+      <div class="hero-title">Queue <em>Tracker</em></div>
+      <div class="hero-desc">Track your position in real-time and view your personalized AI Smart Report — know exactly when to arrive.</div>
+    </div>
+    <div class="hero-search">
+      <div class="search-label">Enter your token</div>
+      <div class="search-row">
+        <input class="search-input" type="text" placeholder="Token ID or Number e.g. A-52" id="tokenInput" />
+        <button class="btn-track" onclick="trackToken()">&#128269; Track</button>
+      </div>
+      <div class="search-hint" id="searchHint">Try: A-52, B-09, C-17 to preview</div>
+    </div>
+  </div>
+
+  <div class="section-label">Your token status</div>
+
+  <div class="token-dashboard">
+    <div class="token-main-card">
+      <div class="tmc-top">
+        <div>
+          <div class="tmc-hospital">City Hospital &mdash; OPD</div>
+          <div class="tmc-sub">
+            <span class="dept-chip">General Medicine</span>
+            <span class="status-live"><span class="sdot"></span> Live</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tmc-tokens">
+        <div class="token-box tb-now">
+          <div class="tb-label">Now Serving</div>
+          <div class="tb-num" id="nowServing">A-43</div>
+          <div class="tb-tag">Counter 2</div>
+        </div>
+        <div class="token-box tb-yours">
+          <div class="tb-label">Your Token</div>
+          <div class="tb-num" id="yourToken">A-52</div>
+          <div class="tb-tag">9 ahead of you</div>
+        </div>
+      </div>
+
+      <div class="eta-block">
+        <div class="eta-left">
+          <div class="eta-label">Estimated wait time</div>
+          <div class="eta-val" id="etaVal">12 min</div>
+          <div class="eta-sub">Arrive by 11:42 AM &mdash; AI predicted</div>
+        </div>
+        <div class="emerg-pill">
+          <div class="ep-dot"></div>
+          <div class="ep-txt">Emergency Priority Active</div>
+        </div>
+      </div>
+
+      <div class="queue-progress">
+        <div class="qp-header">
+          <div class="qp-title">Queue Status</div>
+          <div class="qp-count" id="aheadCount">9 people ahead</div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill" style="width:52%"></div>
+        </div>
+        <div class="qp-ends">
+          <span id="startToken">A-44</span>
+          <span id="endToken">A-52</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-cards">
+      <div class="dept-status-card">
+        <div class="ds-head">
+          <div>
+            <div class="ds-title">Department Overview</div>
+            <div class="ds-sub">Live crowd &amp; wait times</div>
+          </div>
+        </div>
+        <div class="ds-row">
+          <div class="dsr-left">
+            <div class="dsr-name">General Medicine</div>
+            <div class="dsr-sub">8 waiting &middot; 1 served</div>
+          </div>
+          <div class="dsr-right">
+            <div class="dsr-wait wt-r">80 min</div>
+            <div class="crowd cr-h"><div class="cdot cdot-r"></div>Crowded</div>
+          </div>
+        </div>
+        <div class="ds-row">
+          <div class="dsr-left">
+            <div class="dsr-name">Cardiology</div>
+            <div class="dsr-sub">6 waiting &middot; 2 served</div>
+          </div>
+          <div class="dsr-right">
+            <div class="dsr-wait wt-a">45 min</div>
+            <div class="crowd cr-m"><div class="cdot cdot-a"></div>Moderate</div>
+          </div>
+        </div>
+        <div class="ds-row">
+          <div class="dsr-left">
+            <div class="dsr-name">Pediatrics</div>
+            <div class="dsr-sub">3 waiting &middot; 2 served</div>
+          </div>
+          <div class="dsr-right">
+            <div class="dsr-wait wt-g">20 min</div>
+            <div class="crowd cr-l"><div class="cdot cdot-g"></div>Fast</div>
+          </div>
+        </div>
+        <div class="ds-row">
+          <div class="dsr-left">
+            <div class="dsr-name">Neurology</div>
+            <div class="dsr-sub">10 waiting &middot; 0 served</div>
+          </div>
+          <div class="dsr-right">
+            <div class="dsr-wait wt-r">95 min</div>
+            <div class="crowd cr-h"><div class="cdot cdot-r"></div>Crowded</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="recent-card">
+        <div class="ds-head">
+          <div>
+            <div class="ds-title">Live Alerts</div>
+            <div class="ds-sub">Queue notifications</div>
+          </div>
+        </div>
+        <div class="rc-item">
+          <div class="rc-icon ri-g">&#10003;</div>
+          <div>
+            <div class="rc-title">A-50 just got called</div>
+            <div class="rc-sub">2 more tokens before yours</div>
+          </div>
+          <div class="rc-time">1m ago</div>
+        </div>
+        <div class="rc-item">
+          <div class="rc-icon ri-b">&#9877;</div>
+          <div>
+            <div class="rc-title">Doctor assigned to your queue</div>
+            <div class="rc-sub">Dr. Riya Sharma &mdash; Counter 2</div>
+          </div>
+          <div class="rc-time">5m ago</div>
+        </div>
+        <div class="rc-item">
+          <div class="rc-icon ri-a">&#9888;</div>
+          <div>
+            <div class="rc-title">Wait time updated</div>
+            <div class="rc-sub">Revised from 18 min to 12 min</div>
+          </div>
+          <div class="rc-time">9m ago</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-row">
+    <div class="info-card">
+      <div class="ic-label">Active Tokens</div>
+      <div class="ic-val">31</div>
+      <div class="ic-tag">hospital-wide today</div>
+    </div>
+    <div class="info-card">
+      <div class="ic-label">Avg. Wait</div>
+      <div class="ic-val">58m</div>
+      <div class="ic-tag">across all depts</div>
+    </div>
+    <div class="info-card">
+      <div class="ic-label">Served Today</div>
+      <div class="ic-val">47</div>
+      <div class="ic-tag">patients completed</div>
+    </div>
+    <div class="info-card">
+      <div class="ic-label">Doctors Active</div>
+      <div class="ic-val">12</div>
+      <div class="ic-tag">on duty right now</div>
+    </div>
+  </div>
+
+  <div class="section-label">How queue tracking works</div>
+  <div class="how-row">
+    <div class="how-card">
+      <div class="hc-num">1</div>
+      <div class="hc-title">Book or walk in</div>
+      <div class="hc-desc">Get a token number when you book online via MediFlow AI or arrive at the hospital reception counter.</div>
+    </div>
+    <div class="how-card">
+      <div class="hc-num">2</div>
+      <div class="hc-title">Track in real-time</div>
+      <div class="hc-desc">Enter your token ID above. Our AI monitors queue movement live and predicts your exact wait time dynamically.</div>
+    </div>
+    <div class="how-card">
+      <div class="hc-num">3</div>
+      <div class="hc-title">Arrive right on time</div>
+      <div class="hc-desc">Get notified when you are 2 tokens away. No more waiting in the physical queue — arrive just in time for your turn.</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const tokens = {
+  'A-52': {now:'A-43', dept:'General Medicine', wait:'12 min', ahead:9, progress:52, start:'A-44', end:'A-52', eta:'11:42 AM'},
+  'B-09': {now:'B-05', dept:'Cardiology', wait:'28 min', ahead:4, progress:74, start:'B-06', end:'B-09', eta:'11:58 AM'},
+  'C-17': {now:'C-14', dept:'Pediatrics', wait:'8 min', ahead:3, progress:82, start:'C-15', end:'C-17', eta:'11:38 AM'},
+};
+function trackToken() {
+  const val = document.getElementById('tokenInput').value.trim().toUpperCase();
+  const data = tokens[val];
+  if(data) {
+    document.getElementById('nowServing').textContent = data.now;
+    document.getElementById('yourToken').textContent = val;
+    document.getElementById('etaVal').textContent = data.wait;
+    document.getElementById('aheadCount').textContent = data.ahead + ' people ahead';
+    document.getElementById('progressFill').style.width = data.progress + '%';
+    document.getElementById('startToken').textContent = data.start;
+    document.getElementById('endToken').textContent = data.end;
+    document.querySelector('.eta-sub').textContent = 'Arrive by ' + data.eta + ' \u2014 AI predicted';
+    document.querySelector('.tb-tag').textContent = data.dept;
+    document.getElementById('searchHint').textContent = 'Tracking token ' + val + ' live';
+  } else {
+    document.getElementById('searchHint').textContent = val ? 'Token not found. Try A-52, B-09 or C-17' : 'Enter a token ID to track';
+  }
+}
+document.getElementById('tokenInput').addEventListener('keydown', function(e){ if(e.key==='Enter') trackToken(); });
+</script>
+</body>
+</html>
