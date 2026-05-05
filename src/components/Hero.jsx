@@ -35,10 +35,15 @@ export default function Hero() {
             <Link to="/dashboard" className="flex items-center justify-center px-7 py-3.5 font-bold text-lg rounded-2xl transition-all shadow-xl" style={{ background: '#3B82F6', color: 'white', boxShadow: '0 8px 24px rgba(59,130,246,0.35)' }}>
               Get Started
             </Link>
-            <button className="px-7 py-3.5 bg-white/85 backdrop-blur-md border border-white text-slate-900 font-bold text-lg rounded-2xl hover:bg-white transition-all flex items-center gap-2 shadow-xl">
+            <a
+              href="https://drive.google.com/file/d/1HiO7Cr18ykhF7igzQjkcgPk7rtssUK-z"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-7 py-3.5 bg-white/85 backdrop-blur-md border border-white text-slate-900 font-bold text-lg rounded-2xl hover:bg-white transition-all flex items-center gap-2 shadow-xl"
+            >
               <span className="material-symbols-outlined text-blue-600 text-xl">play_circle</span>
               Watch Demo
-            </button>
+            </a>
           </div>
 
           <div className="pt-2">

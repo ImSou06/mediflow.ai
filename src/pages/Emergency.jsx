@@ -183,7 +183,7 @@ export default function Emergency() {
           </div>
 
           {/* ── Right: Analysis Results ────────────────────────────────────── */}
-          <div className="flex flex-col gap-5" style={{ minHeight: '100%' }}>
+          <div className="flex flex-col gap-5" style={{ height: '100%', minHeight: 0 }}>
             {analysis ? (
               <>
                 {/* Severity Alert */}
@@ -275,14 +275,18 @@ export default function Emergency() {
                 </div>
               </>
             ) : (
-              <div className="rounded-2xl flex flex-col items-center justify-center text-center flex-1" style={{ background: '#93C5FD', border: '2px dashed rgba(255,255,255,0.4)', padding: '4rem 2rem', boxShadow: '0 4px 24px rgba(147,197,253,0.5)' }}>
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(255,255,255,0.4)', color: '#1d4ed8' }}>
-                  <IconBrain />
+              <div className="rounded-2xl flex flex-col items-center justify-center text-center flex-1" style={{ background: '#93C5FD', border: '2px dashed rgba(255,255,255,0.4)', padding: '4rem 2rem', boxShadow: '0 4px 24px rgba(147,197,253,0.5)', position: 'relative', overflow: 'hidden' }}>
+                <div className="absolute pointer-events-none" style={{ top: -30, right: -30, width: 150, height: 150, borderRadius: '50%', border: '26px solid rgba(255,255,255,0.2)' }} />
+                <div className="absolute pointer-events-none" style={{ bottom: -40, left: -20, width: 120, height: 120, borderRadius: '50%', border: '20px solid rgba(255,255,255,0.15)' }} />
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(255,255,255,0.4)', color: '#1d4ed8' }}>
+                    <IconBrain />
+                  </div>
+                  <div className="font-bold mb-2" style={{ fontSize: 15, color: '#0f1e3d' }}>Awaiting Analysis</div>
+                  <p style={{ fontSize: 13, color: '#1e3a5f', maxWidth: 280 }}>
+                    Enter symptoms and click "Analyze Symptoms" to get AI-powered triage results.
+                  </p>
                 </div>
-                <div className="font-bold mb-2" style={{ fontSize: 15, color: '#0f1e3d' }}>Awaiting Analysis</div>
-                <p style={{ fontSize: 13, color: '#1e3a5f', maxWidth: 280 }}>
-                  Enter symptoms and click "Analyze Symptoms" to get AI-powered triage results.
-                </p>
               </div>
             )}
           </div>
