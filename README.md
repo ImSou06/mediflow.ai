@@ -1,16 +1,87 @@
-# React + Vite
+# MediFlow AI – Smart Hospital Queue System Software
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+MediFlow AI is an AI-powered web platform designed to reduce hospital waiting time and improve patient flow management through intelligent queue prediction and prioritization.
 
-Currently, two official plugins are available:
+## Demo Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Symptom-Based Smart Input
+Users can enter symptoms or token details
+System analyzes input to determine urgency and priority level
 
-## React Compiler
+2. Wait Time Prediction
+Predicts expected waiting time before hospital visit
+Uses:
+Queue length
+Average consultation time
+Doctor availability
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+3. Emergency Analyzer
+Detects critical cases based on symptoms
+Automatically assigns higher priority
+Helps avoid delays in emergency situations
 
-## Expanding the ESLint configuration
+4. Real-Time Queue Tracker
+Displays live queue status
+Shows:
+Current token progress
+Estimated wait time
+Enables better planning for patients
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+5. Smart Hospital & Department Suggestion
+Recommends:
+Appropriate department
+Suitable doctor
+Suggests alternative hospitals if overcrowded
+
+6. AI Smart Report
+Generates a summary report including:
+Predicted wait time
+Priority level
+Suggested actions
+
+7. Hospital Dashboard (Admin View)
+Provides hospitals with:
+Queue monitoring tools
+Patient flow insights
+Helps in resource optimization
+
+8. Token Booking System
+Allows users to:
+View queue
+Plan visits accordingly
+Reduces unnecessary crowding
+
+## Tech Stack
+
+Frontend: React, Tailwind CSS
+Backend: Python Flask
+AI Engine: Python
+Database: SQLite
+Deployment: Render
+
+## Goal
+
+Right Patient → Right Place → Right Time
+
+## Impact
+
+Reduce waiting time by 20–40%
+Faster emergency response
+Improved hospital workflow
+Better patient experience
+
+## Future Scope
+
+Integration with real hospital systems
+Advanced ML-based prediction models
+Mobile application
+Government healthcare integration
+
+## Demo
+
+Deployed Link: https://mediflow-ai-wyt0.onrender.com/
+Demo Video: https://drive.google.com/file/d/1HiO7Cr18ykhF7igzQjkcgPk7rtssUK-z/view?usp=drive_link
+
+Team
+BitCore Novas
+Narula Institute of Technology
