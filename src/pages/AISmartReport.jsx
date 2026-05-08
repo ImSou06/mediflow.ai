@@ -89,6 +89,7 @@ export default function AISmartReport() {
   const deptId   = searchParams.get('dept_id') || '1'
   const age      = searchParams.get('age') || '30'
   const symptoms = searchParams.get('symptoms') || ''
+  const patientName = searchParams.get('name') || ''
 
   const [report, setReport]   = useState(null)
   const [loading, setLoading] = useState(true)
@@ -235,15 +236,26 @@ export default function AISmartReport() {
                       {cleanCrowd(report.crowd)}
                     </span>
                   </div>
+                  {report.priority_score != null && (
+                    <div className="flex justify-between items-center">
+                      <span style={{ fontSize: 13, color: '#1e3a5f' }}>Priority Score</span>
+                      <span className="font-bold font-mono" style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: report.priority_score >= 50 ? '#fee2e2' : report.priority_score >= 25 ? '#fef3c7' : '#dcfce7', color: report.priority_score >= 50 ? '#dc2626' : report.priority_score >= 25 ? '#d97706' : '#16a34a' }}>
+                        {report.priority_score} pts
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* ETA mini block */}
                 <div className="rounded-2xl" style={{ background: '#0f1e3d', padding: '1rem 1.25rem' }}>
                   <div className="font-bold font-mono mb-1" style={{ fontSize: 13, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#93c5fd' }}>Estimated Arrival</div>
                   <div className="font-extrabold font-mono" style={{ fontSize: 22, letterSpacing: '-1px', color: 'white' }}>
-                    {(() => { const d = new Date(); d.setMinutes(d.getMinutes() + (report.wait_time || 0)); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })()}
+                    {report.estimated_arrival || (() => { const d = new Date(); d.setMinutes(d.getMinutes() + (report.wait_time || 0)); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })()}
                   </div>
                   <div style={{ fontSize: 11, color: '#bfdbfe', marginTop: 2 }}>AI predicted · {report.total_time} min total</div>
+                  {report.explanation && (
+                    <div style={{ fontSize: 10, color: 'rgba(191,219,254,0.7)', marginTop: 4, fontFamily: 'DM Mono, monospace' }}>{report.explanation}</div>
+                  )}
                 </div>
 
                 {/* Elderly mode */}
@@ -281,6 +293,30 @@ export default function AISmartReport() {
                     <div style={{ fontSize: 12, color: '#1e3a5f' }}>Powered by MediFlow AI prediction engine</div>
                   </div>
                 </div>
+
+                {/* Patient name + age — styled to match queue page patient card */}
+                {(patientName || age) && (
+                  <div className="w-full flex items-center gap-3 rounded-2xl" style={{
+                    padding: '1rem 1.5rem',
+                    background: 'rgba(255,255,255,0.45)',
+                    border: '1px solid rgba(255,255,255,0.6)',
+                  }}>
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#1d4ed8', color: 'white' }}>
+                      <IconUser />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div style={{ fontSize: 13, fontWeight: 500, color: '#0f1e3d' }}>
+                        {patientName || '—'}
+                      </div>
+                      <div className="font-mono" style={{ fontSize: 11, color: '#1e3a5f', marginTop: 2 }}>
+                        Age: {age}
+                        {Number(age) >= 60 && (
+                          <span className="ml-2 font-bold" style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: '#fde68a', color: '#d97706' }}>Elderly Priority</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* 4-grid stat cards */}
                 <div className="grid grid-cols-2 gap-3">

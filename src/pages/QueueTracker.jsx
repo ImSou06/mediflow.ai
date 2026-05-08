@@ -47,6 +47,12 @@ const IconArrow = () => (
     <polyline points="12 5 19 12 12 19" />
   </svg>
 )
+const IconUser = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+)
 
 // ── Crowd badge ───────────────────────────────────────────────────────────────
 function CrowdBadge({ level, label }) {
@@ -75,6 +81,16 @@ function waitColor(mins) {
   return 'text-green-600'
 }
 
+// ── Token sequence for "Now Serving" live simulation ─────────────────────────
+// Generates a pool of sequential tokens in A000-A199 range starting from a
+// random offset so each page load looks different, advances every 6 seconds.
+function makeTokenPool(start, count = 12) {
+  return Array.from({ length: count }, (_, i) => {
+    const n = (start + i) % 200  // wrap within 000-199
+    return `A${String(n).padStart(3, '0')}`
+  })
+}
+
 export default function QueueTracker() {
   const navigate = useNavigate()
   const [tokenInput, setTokenInput] = useState('')
@@ -83,6 +99,13 @@ export default function QueueTracker() {
   const [error, setError]           = useState('')
   const [deptOverview, setDeptOverview] = useState([])
   const [stats, setStats]           = useState(null)
+
+  // Booking info from localStorage (set after booking)
+  const [bookingInfo, setBookingInfo] = useState(null)
+
+  // Live "Now Serving" ticker — advances every 6 s when no token is tracked
+  const [livePool]  = useState(() => makeTokenPool(Math.floor(Math.random() * 180)))
+  const [liveIdx, setLiveIdx] = useState(0)
 
   // Load department overview + stats on mount
   useEffect(() => {
@@ -95,7 +118,20 @@ export default function QueueTracker() {
       .then(r => r.json())
       .then(data => setStats(data))
       .catch(() => {})
+
+    // Load last booking info from localStorage
+    try {
+      const stored = localStorage.getItem('mediflow_last_booking')
+      if (stored) setBookingInfo(JSON.parse(stored))
+    } catch {}
   }, [])
+
+  // Advance the live ticker every 6 seconds when no token is being tracked
+  useEffect(() => {
+    if (tokenData) return
+    const id = setInterval(() => setLiveIdx(i => (i + 1) % livePool.length), 25000)
+    return () => clearInterval(id)
+  }, [tokenData, livePool])
 
   const trackToken = () => {
     const val = tokenInput.trim()
@@ -110,7 +146,9 @@ export default function QueueTracker() {
   const handleKeyDown = (e) => { if (e.key === 'Enter') trackToken() }
 
   // Derived display values
-  const nowServing  = tokenData ? `${String.fromCharCode(64 + ((tokenData.dept_id % 26) || 1))}${100 + Math.max(0, (tokenData.position || 0) - 1)}` : '~'
+  const nowServing  = tokenData
+    ? `A${String((tokenData.position || 0) % 200).padStart(3, '0')}`
+    : livePool[liveIdx]
   const yourToken   = tokenData ? tokenData.token_code : '~'
   const aheadCount  = tokenData ? (tokenData.position || 0) : null
   const waitMins    = tokenData ? (tokenData.ai_report?.wait_time ?? 0) : null
@@ -123,16 +161,25 @@ export default function QueueTracker() {
     ? Math.max(10, Math.min(95, 100 - (aheadCount / Math.max(aheadCount + 1, 10)) * 100))
     : 0
   const startTokenLabel = tokenData
-    ? `${String.fromCharCode(64 + ((tokenData.dept_id % 26) || 1))}${100 + Math.max(0, (tokenData.position || 0) - 1)}`
+    ? `A${String((tokenData.position || 0) % 200).padStart(3, '0')}`
     : '~'
   const endTokenLabel = tokenData ? tokenData.token_code : '~'
 
-  // Live alerts (static contextual, updated when token tracked)
+  // Hospital name: from token data, or from last booking info, or default
+  const hospitalName = tokenData?.hospital_name
+    || bookingInfo?.hospitalName
+    || null
+
+  // Patient info: from token data (tracked) or from booking info
+  const patientName = tokenData?.patient_name || bookingInfo?.patientName || null
+  const patientAge  = tokenData?.age ?? bookingInfo?.age ?? null
+
+  // Live alerts — show static defaults when no token, real data when tracked
   const alerts = tokenData ? [
     {
       icon: <IconCheck />,
       iconBg: 'bg-green-100 text-green-600',
-      title: `${nowServing} just got called`,
+      title: `Token ${nowServing} just got called`,
       sub: `${aheadCount} more token${aheadCount !== 1 ? 's' : ''} before yours`,
       time: '1m ago',
     },
@@ -146,11 +193,33 @@ export default function QueueTracker() {
     {
       icon: <IconAlert />,
       iconBg: 'bg-amber-100 text-amber-600',
-      title: 'Wait time updated',
+      title: `Wait time updated for ${yourToken}`,
       sub: `AI predicted: ${waitMins} min`,
       time: '9m ago',
     },
-  ] : []
+  ] : [
+    {
+      icon: <IconCheck />,
+      iconBg: 'bg-green-100 text-green-600',
+      title: `Token ${nowServing} just got called`,
+      sub: 'Queue is moving steadily',
+      time: 'now',
+    },
+    {
+      icon: <IconStethoscope />,
+      iconBg: 'bg-blue-100 text-blue-600',
+      title: 'Doctors on duty',
+      sub: 'All counters are currently active',
+      time: '2m ago',
+    },
+    {
+      icon: <IconAlert />,
+      iconBg: 'bg-amber-100 text-amber-600',
+      title: 'Track a token for live updates',
+      sub: 'Enter your token number above',
+      time: '',
+    },
+  ]
 
   return (
     <section className="pt-[108px] pb-16 min-h-screen" style={{ background: '#f0f5ff', fontFamily: "'Plus Jakarta Sans', Inter, sans-serif" }}>
@@ -232,7 +301,9 @@ export default function QueueTracker() {
             {/* Hospital header */}
             <div className="flex items-start justify-between">
               <div>
-                <div className="font-extrabold" style={{ fontSize: 23, color: '#0f1e3d', letterSpacing: '-0.5px' }}>City Hospital — OPD</div>
+                <div className="font-extrabold" style={{ fontSize: 23, color: '#0f1e3d', letterSpacing: '-0.5px' }}>
+                  {hospitalName ? `${hospitalName} — OPD` : 'Hospital — OPD'}
+                </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="font-bold font-mono" style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.5)', color: '#1d4ed8' }}>
                     {tokenData?.ai_report?.department || 'General Medicine'}
@@ -249,7 +320,7 @@ export default function QueueTracker() {
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-2xl" style={{ padding: '1.25rem 1.5rem', background: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.6)' }}>
                 <div className="font-bold font-mono mb-1.5" style={{ fontSize: 13, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#1d4ed8' }}>Now Serving</div>
-                <div className="font-extrabold font-mono leading-none" style={{ fontSize: 38, letterSpacing: '-2px', color: '#0f1e3d' }}>{nowServing}</div>
+                <div className="font-extrabold font-mono leading-none" style={{ fontSize: 38, letterSpacing: '-2px', color: '#0f1e3d', transition: 'opacity 0.3s' }}>{nowServing}</div>
                 <div className="font-mono mt-1" style={{ fontSize: 11, color: '#1e3a5f' }}>Counter 2</div>
               </div>
               <div className="rounded-2xl" style={{ padding: '1.25rem 1.5rem', background: '#3B82F6', boxShadow: '0 4px 20px rgba(59,130,246,0.35)' }}>
@@ -299,7 +370,7 @@ export default function QueueTracker() {
 
             {/* AI Smart Report button */}
             <button
-              onClick={() => tokenData && navigate(`/ai-report?token=${encodeURIComponent(tokenData.token_code)}&dept_id=${tokenData.dept_id}&age=${tokenData.age || 30}&symptoms=${encodeURIComponent(tokenData.symptoms || '')}`)}
+              onClick={() => tokenData && navigate(`/ai-report?token=${encodeURIComponent(tokenData.token_code)}&dept_id=${tokenData.dept_id}&age=${tokenData.age || 30}&symptoms=${encodeURIComponent(tokenData.symptoms || '')}&name=${encodeURIComponent(tokenData.patient_name || '')}`)}
               disabled={!tokenData}
               className="w-full flex items-center justify-between font-bold rounded-2xl transition-all"
               style={{
@@ -323,6 +394,30 @@ export default function QueueTracker() {
               </div>
               <IconArrow />
             </button>
+
+            {/* Patient info — shown after booking/tracking */}
+            {(patientName || patientAge) && (
+              <div className="w-full flex items-center gap-3 rounded-2xl" style={{
+                padding: '1rem 1.5rem',
+                background: 'rgba(255,255,255,0.45)',
+                border: '1px solid rgba(255,255,255,0.6)',
+              }}>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#1d4ed8', color: 'white' }}>
+                  <IconUser />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div style={{ fontSize: 13, fontWeight: 500, color: '#0f1e3d' }}>
+                    {patientName || '—'}
+                  </div>
+                  <div className="font-mono" style={{ fontSize: 11, fontWeight: 500, opacity: 0.75, color: '#1e3a5f' }}>
+                    Age: {patientAge ?? '—'}
+                    {Number(patientAge) >= 60 && (
+                      <span className="ml-2 font-bold" style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: '#fde68a', color: '#d97706' }}>Elderly Priority</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right — side cards */}

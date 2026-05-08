@@ -188,31 +188,33 @@ export default function Emergency() {
               <>
                 {/* Severity Alert */}
                 <div className="rounded-2xl" style={{ 
-                  background: analysis.is_emergency ? '#fee2e2' : '#dcfce7', 
-                  border: `1px solid ${analysis.is_emergency ? '#fecaca' : '#bbf7d0'}`,
-                  boxShadow: analysis.is_emergency ? '0 4px 20px rgba(220,38,38,0.2)' : '0 2px 8px rgba(22,163,74,0.15)',
+                  background: analysis.is_emergency ? '#fee2e2' : (analysis.emergency === 'Urgent' ? '#fef9c3' : '#dcfce7'), 
+                  border: `1px solid ${analysis.is_emergency ? '#fecaca' : (analysis.emergency === 'Urgent' ? '#fde68a' : '#bbf7d0')}`,
+                  boxShadow: analysis.is_emergency ? '0 4px 20px rgba(220,38,38,0.2)' : (analysis.emergency === 'Urgent' ? '0 2px 8px rgba(217,119,6,0.15)' : '0 2px 8px rgba(22,163,74,0.15)'),
                   padding: '2rem'
                 }}>
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ 
-                      background: analysis.is_emergency ? '#fca5a5' : '#86efac', 
-                      color: analysis.is_emergency ? '#7f1d1d' : '#14532d' 
+                      background: analysis.is_emergency ? '#fca5a5' : (analysis.emergency === 'Urgent' ? '#fde68a' : '#86efac'), 
+                      color: analysis.is_emergency ? '#7f1d1d' : (analysis.emergency === 'Urgent' ? '#92400e' : '#14532d')
                     }}>
                       {analysis.is_emergency ? <IconAlertTriangle /> : <IconCheck />}
                     </div>
                     <div>
-                      <div style={{ ...LABEL_STYLE, fontSize: 11, color: analysis.is_emergency ? '#991b1b' : '#166534', marginBottom: 2 }}>
-                        {analysis.is_emergency ? 'Critical Emergency' : 'Non-Critical'}
+                      <div style={{ ...LABEL_STYLE, fontSize: 11, color: analysis.is_emergency ? '#991b1b' : (analysis.emergency === 'Urgent' ? '#92400e' : '#166534'), marginBottom: 2 }}>
+                        {analysis.is_emergency ? 'Critical Emergency' : (analysis.emergency === 'Urgent' ? 'Urgent' : 'Non-Critical')}
                       </div>
-                      <div className="font-extrabold" style={{ fontSize: 20, color: analysis.is_emergency ? '#7f1d1d' : '#14532d', letterSpacing: '-0.5px' }}>
+                      <div className="font-extrabold" style={{ fontSize: 20, color: analysis.is_emergency ? '#7f1d1d' : (analysis.emergency === 'Urgent' ? '#78350f' : '#14532d'), letterSpacing: '-0.5px' }}>
                         {analysis.emergency}
                       </div>
                     </div>
                   </div>
-                  <p style={{ fontSize: 13, color: analysis.is_emergency ? '#991b1b' : '#166534', lineHeight: 1.6 }}>
+                  <p style={{ fontSize: 13, color: analysis.is_emergency ? '#991b1b' : (analysis.emergency === 'Urgent' ? '#92400e' : '#166534'), lineHeight: 1.6 }}>
                     {analysis.is_emergency 
                       ? 'Critical symptoms detected. Bypassing normal queue. Proceed immediately to emergency ward.'
-                      : 'No critical keywords detected. Standard OPD queue applies. You can book a token normally.'}
+                      : analysis.emergency === 'Urgent'
+                        ? 'Elevated symptoms detected. Please visit soon and inform the reception about your condition.'
+                        : 'No critical keywords detected. Standard OPD queue applies. You can book a token normally.'}
                   </p>
                 </div>
 
@@ -239,12 +241,12 @@ export default function Emergency() {
                           fontSize: 12, 
                           padding: '3px 10px', 
                           borderRadius: 20, 
-                          background: analysis.is_emergency ? '#fee2e2' : '#dcfce7', 
-                          color: analysis.is_emergency ? '#dc2626' : '#16a34a',
-                          border: `1px solid ${analysis.is_emergency ? '#fecaca' : '#bbf7d0'}`
+                          background: analysis.is_emergency ? '#fee2e2' : (analysis.emergency === 'Urgent' ? '#fef9c3' : '#dcfce7'), 
+                          color: analysis.is_emergency ? '#dc2626' : (analysis.emergency === 'Urgent' ? '#d97706' : '#16a34a'),
+                          border: `1px solid ${analysis.is_emergency ? '#fecaca' : (analysis.emergency === 'Urgent' ? '#fde68a' : '#bbf7d0')}`
                         }}>
-                          <IconDot color={analysis.is_emergency ? '#dc2626' : '#16a34a'} />
-                          {analysis.is_emergency ? 'Emergency' : 'Normal'}
+                          <IconDot color={analysis.is_emergency ? '#dc2626' : (analysis.emergency === 'Urgent' ? '#d97706' : '#16a34a')} />
+                          {analysis.is_emergency ? 'Emergency' : (analysis.emergency === 'Urgent' ? 'Urgent' : 'Normal')}
                         </span>
                       </div>
                     </div>
