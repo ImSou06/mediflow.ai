@@ -96,13 +96,13 @@ def suggest_doctor(dept_id=None):
         conn = get_connection()
         cur = conn.cursor()
         cur.execute(
-            "SELECT name FROM doctors WHERE dept_id = ? AND available = 1",
+            "SELECT doctor_name FROM doctors WHERE dept_id = ? AND availability = 'Available'",
             (dept_id,)
         )
         rows = cur.fetchall()
         conn.close()
         if rows:
-            return random.choice([r["name"] for r in rows])
+            return random.choice([r["doctor_name"] for r in rows])
     return random.choice(["Dr. Sharma", "Dr. Das", "Dr. Roy"])
 
 
@@ -140,28 +140,47 @@ def hospital_journey(dept_id, wait_time):
 
 
 # ───────────────────────────────────────────────────────
-# 6. ANALYSIS  (severity score from ai_updated + is_emergency bool)
+# 6. ANALYSIS  (severity score + broad keyword matching)
 # ───────────────────────────────────────────────────────
 def analyze_patient(symptoms, dept_id):
     s = symptoms.lower()
 
-    # Severity scoring (from ai_updated)
+    # Severity scoring — broad keyword variants covered
     severity_score = 0
-    if "chest pain"   in s: severity_score += 5
-    if "breathing"    in s: severity_score += 4
-    if "bleeding"     in s: severity_score += 5
-    if "unconscious"  in s: severity_score += 6
-    if "heart attack" in s: severity_score += 6
-    if "stroke"       in s: severity_score += 6
-    if "fever"        in s: severity_score += 2
+    if any(k in s for k in ["chest pain", "chest ache", "chest tightness"]):
+        severity_score += 5
+    if any(k in s for k in ["breathing", "breath", "shortness of breath",
+                             "difficulty breathing", "can't breathe", "cannot breathe",
+                             "breathless", "dyspnea"]):
+        severity_score += 4
+    if any(k in s for k in ["bleeding", "blood loss", "hemorrhage"]):
+        severity_score += 5
+    if any(k in s for k in ["unconscious", "unresponsive", "fainted", "collapsed",
+                             "not responding", "passed out"]):
+        severity_score += 6
+    if any(k in s for k in ["heart attack", "cardiac arrest", "myocardial"]):
+        severity_score += 6
+    if any(k in s for k in ["stroke", "paralysis", "facial droop", "slurred speech"]):
+        severity_score += 6
+    if any(k in s for k in ["severe pain", "extreme pain", "unbearable pain"]):
+        severity_score += 4
+    if any(k in s for k in ["fever", "high temperature", "pyrexia"]):
+        severity_score += 2
 
-    is_emergency = severity_score >= 7
+    is_emergency = severity_score >= 6
     emergency = "Emergency" if is_emergency else ("Urgent" if severity_score >= 4 else "Normal")
 
-    if "bone" in s or "fracture" in s:
+    # Department routing
+    if any(k in s for k in ["bone", "fracture", "joint", "sprain", "orthopedic"]):
         department = "Orthopedic"
-    elif "heart" in s or "chest" in s:
+    elif any(k in s for k in ["heart", "chest", "cardiac", "cardio"]):
         department = "Cardiology"
+    elif any(k in s for k in ["child", "infant", "baby", "pediatric"]):
+        department = "Pediatrics"
+    elif any(k in s for k in ["ear", "nose", "throat", " ent ", "sinus"]):
+        department = "ENT"
+    elif any(k in s for k in ["tooth", "dental", "gum", "mouth"]):
+        department = "Dental"
     else:
         department = "General Medicine"
 
@@ -315,7 +334,7 @@ def get_dashboard_stats(hospital_id=1):
     cur.execute("""
         SELECT COUNT(*) as cnt FROM doctors dr
         JOIN departments d ON dr.dept_id = d.dept_id
-        WHERE d.hospital_id = ? AND dr.available = 1
+        WHERE d.hospital_id = ? AND dr.availability = 'Available'
     """, (hospital_id,))
     active_doctors = cur.fetchone()["cnt"]
 

@@ -213,7 +213,7 @@ export default function AISmartReport() {
                   <div className="flex justify-between items-center">
                     <span style={{ fontSize: 13, color: '#1e3a5f' }}>Position</span>
                     <span className="font-bold font-mono" style={{ fontSize: 13, color: '#0f1e3d' }}>
-                      #{report.wait_time > 0 ? Math.ceil(report.wait_time / 10) : 0} ahead
+                      #{report.position != null && report.position >= 0 ? report.position : (report.queue_length ?? '—')} ahead
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -226,8 +226,12 @@ export default function AISmartReport() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span style={{ fontSize: 13, color: '#1e3a5f' }}>Priority</span>
-                    <span className="font-bold font-mono" style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: report.is_emergency ? '#fee2e2' : '#dcfce7', color: report.is_emergency ? '#dc2626' : '#16a34a' }}>
-                      {report.is_emergency ? 'Emergency' : 'Normal'}
+                    <span className="font-bold font-mono" style={{
+                      fontSize: 11, padding: '3px 10px', borderRadius: 20,
+                      background: report.is_emergency ? '#fee2e2' : (report.emergency === 'Urgent' ? '#fef9c3' : '#dcfce7'),
+                      color:      report.is_emergency ? '#dc2626' : (report.emergency === 'Urgent' ? '#d97706' : '#16a34a'),
+                    }}>
+                      {report.emergency || (report.is_emergency ? 'Emergency' : 'Normal')}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -294,8 +298,8 @@ export default function AISmartReport() {
                   </div>
                 </div>
 
-                {/* Patient name + age — styled to match queue page patient card */}
-                {(patientName || age) && (
+                {/* Patient name + age — only shown when name is known (own booking) */}
+                {patientName && (
                   <div className="w-full flex items-center gap-3 rounded-2xl" style={{
                     padding: '1rem 1.5rem',
                     background: 'rgba(255,255,255,0.45)',
@@ -306,9 +310,9 @@ export default function AISmartReport() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div style={{ fontSize: 13, fontWeight: 500, color: '#0f1e3d' }}>
-                        {patientName || '—'}
+                        {patientName}
                       </div>
-                      <div className="font-mono" style={{ fontSize: 11, color: '#1e3a5f', marginTop: 2 }}>
+                      <div className="font-mono" style={{ fontSize: 11, fontWeight: 500, opacity: 0.75, color: '#1e3a5f' }}>
                         Age: {age}
                         {Number(age) >= 60 && (
                           <span className="ml-2 font-bold" style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: '#fde68a', color: '#d97706' }}>Elderly Priority</span>
@@ -367,19 +371,41 @@ export default function AISmartReport() {
               </div>
             </div>
 
-            {/* ── Emergency banner ──────────────────────────────────────────── */}
-            {report.is_emergency && (
-              <div className="rounded-2xl flex items-center gap-4 mb-6" style={{ background: '#0f1e3d', border: '1px solid rgba(220,38,38,0.3)', padding: '1.25rem 1.75rem' }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(220,38,38,0.2)', color: '#fca5a5' }}>
+            {/* ── Emergency / Urgent banner ─────────────────────────────── */}
+            {(report.is_emergency || report.emergency === 'Urgent') && (
+              <div className="rounded-2xl flex items-center gap-4 mb-6" style={{
+                background: '#0f1e3d',
+                border: `1px solid ${report.is_emergency ? 'rgba(220,38,38,0.3)' : 'rgba(217,119,6,0.3)'}`,
+                padding: '1.25rem 1.75rem'
+              }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{
+                  background: report.is_emergency ? 'rgba(220,38,38,0.2)' : 'rgba(217,119,6,0.2)',
+                  color: report.is_emergency ? '#fca5a5' : '#fcd34d'
+                }}>
                   <IconAlertTriangle />
                 </div>
                 <div>
-                  <div className="font-bold" style={{ fontSize: 14, color: 'white' }}>Emergency Priority Active</div>
-                  <div style={{ fontSize: 12, color: '#bfdbfe' }}>{report.emergency} — You have been flagged for priority handling. Please proceed to the emergency counter.</div>
+                  <div className="font-bold" style={{ fontSize: 14, color: 'white' }}>
+                    {report.is_emergency ? 'Emergency Priority Active' : 'Urgent — Elevated Symptoms Detected'}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#bfdbfe' }}>
+                    {report.is_emergency
+                      ? `${report.emergency} — You have been flagged for priority handling. Please proceed to the emergency counter.`
+                      : 'Please visit soon and inform the reception about your condition for faster attention.'}
+                  </div>
                 </div>
-                <div className="ml-auto flex items-center gap-2 rounded-lg" style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)', padding: '8px 14px' }}>
-                  <span className="inline-block w-2 h-2 rounded-full bg-red-500" style={{ animation: 'blink 1s infinite' }} />
-                  <span className="font-bold font-mono" style={{ fontSize: 12, color: '#fca5a5' }}>Urgent</span>
+                <div className="ml-auto flex items-center gap-2 rounded-lg" style={{
+                  background: report.is_emergency ? 'rgba(220,38,38,0.15)' : 'rgba(217,119,6,0.15)',
+                  border: `1px solid ${report.is_emergency ? 'rgba(220,38,38,0.3)' : 'rgba(217,119,6,0.3)'}`,
+                  padding: '8px 14px'
+                }}>
+                  <span className="inline-block w-2 h-2 rounded-full" style={{
+                    background: report.is_emergency ? '#ef4444' : '#f59e0b',
+                    animation: 'blink 1s infinite'
+                  }} />
+                  <span className="font-bold font-mono" style={{ fontSize: 12, color: report.is_emergency ? '#fca5a5' : '#fcd34d' }}>
+                    {report.is_emergency ? 'Emergency' : 'Urgent'}
+                  </span>
                 </div>
               </div>
             )}

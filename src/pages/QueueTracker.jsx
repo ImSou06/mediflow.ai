@@ -109,12 +109,18 @@ export default function QueueTracker() {
 
   // Load department overview + stats on mount
   useEffect(() => {
-    fetch('/api/departments/overview?hospital_id=1')
+    // Use the booked hospital's ID if available, otherwise default to 1
+    const storedBooking = (() => {
+      try { return JSON.parse(localStorage.getItem('mediflow_last_booking') || '{}') } catch { return {} }
+    })()
+    const hospitalId = storedBooking.hospitalId || 1
+
+    fetch(`/api/departments/overview?hospital_id=${hospitalId}`)
       .then(r => r.json())
       .then(data => setDeptOverview(Array.isArray(data) ? data.slice(0, 4) : []))
       .catch(() => {})
 
-    fetch('/api/dashboard/stats?hospital_id=1')
+    fetch(`/api/dashboard/stats?hospital_id=${hospitalId}`)
       .then(r => r.json())
       .then(data => setStats(data))
       .catch(() => {})
@@ -139,16 +145,39 @@ export default function QueueTracker() {
     setLoading(true); setError(''); setTokenData(null)
     fetch(`/api/tokens/${encodeURIComponent(val)}`)
       .then(r => { if (!r.ok) throw new Error('Token not found'); return r.json() })
-      .then(data => { setTokenData(data); setLoading(false) })
+      .then(data => {
+        setTokenData(data)
+        setLoading(false)
+        // Refresh dept overview for the tracked token's hospital
+        if (data.hospital_id) {
+          fetch(`/api/departments/overview?hospital_id=${data.hospital_id}`)
+            .then(r => r.json())
+            .then(d => setDeptOverview(Array.isArray(d) ? d.slice(0, 4) : []))
+            .catch(() => {})
+          fetch(`/api/dashboard/stats?hospital_id=${data.hospital_id}`)
+            .then(r => r.json())
+            .then(d => setStats(d))
+            .catch(() => {})
+        }
+      })
       .catch(err => { setError(err.message); setLoading(false) })
   }
 
   const handleKeyDown = (e) => { if (e.key === 'Enter') trackToken() }
 
   // Derived display values
-  const nowServing  = tokenData
-    ? `A${String((tokenData.position || 0) % 200).padStart(3, '0')}`
-    : livePool[liveIdx]
+  // nowServing = yourToken's numeric part minus people ahead (clamped to 0)
+  const nowServing = (() => {
+    if (tokenData) {
+      const code = tokenData.token_code || ''
+      const num  = parseInt(code.replace(/^A/, ''), 10)
+      if (!isNaN(num)) {
+        const serving = Math.max(0, num - (tokenData.position || 0))
+        return `A${String(serving).padStart(3, '0')}`
+      }
+    }
+    return livePool[liveIdx]
+  })()
   const yourToken   = tokenData ? tokenData.token_code : '~'
   const aheadCount  = tokenData ? (tokenData.position || 0) : null
   const waitMins    = tokenData ? (tokenData.ai_report?.wait_time ?? 0) : null
@@ -160,9 +189,17 @@ export default function QueueTracker() {
   const progressPct = tokenData && aheadCount != null
     ? Math.max(10, Math.min(95, 100 - (aheadCount / Math.max(aheadCount + 1, 10)) * 100))
     : 0
-  const startTokenLabel = tokenData
-    ? `A${String((tokenData.position || 0) % 200).padStart(3, '0')}`
-    : '~'
+  const startTokenLabel = (() => {
+    if (tokenData) {
+      const code = tokenData.token_code || ''
+      const num  = parseInt(code.replace(/^A/, ''), 10)
+      if (!isNaN(num)) {
+        const serving = Math.max(0, num - (tokenData.position || 0))
+        return `A${String(serving).padStart(3, '0')}`
+      }
+    }
+    return '~'
+  })()
   const endTokenLabel = tokenData ? tokenData.token_code : '~'
 
   // Hospital name: from token data, or from last booking info, or default
@@ -170,9 +207,16 @@ export default function QueueTracker() {
     || bookingInfo?.hospitalName
     || null
 
-  // Patient info: from token data (tracked) or from booking info
-  const patientName = tokenData?.patient_name || bookingInfo?.patientName || null
-  const patientAge  = tokenData?.age ?? bookingInfo?.age ?? null
+  // Patient info: ONLY from bookingInfo (the person who booked via this browser).
+  // tokenData.patient_name comes from the DB join and may be a seeded/random user —
+  // we only use it if the tracked token matches the one stored in bookingInfo.
+  const isOwnToken = bookingInfo?.token && tokenData?.token_code === bookingInfo.token
+  const patientName = isOwnToken
+    ? bookingInfo.patientName
+    : (bookingInfo?.patientName || null)
+  const patientAge  = isOwnToken
+    ? bookingInfo.age
+    : (bookingInfo?.age ?? null)
 
   // Live alerts — show static defaults when no token, real data when tracked
   const alerts = tokenData ? [
@@ -370,7 +414,7 @@ export default function QueueTracker() {
 
             {/* AI Smart Report button */}
             <button
-              onClick={() => tokenData && navigate(`/ai-report?token=${encodeURIComponent(tokenData.token_code)}&dept_id=${tokenData.dept_id}&age=${tokenData.age || 30}&symptoms=${encodeURIComponent(tokenData.symptoms || '')}&name=${encodeURIComponent(tokenData.patient_name || '')}`)}
+              onClick={() => tokenData && navigate(`/ai-report?token=${encodeURIComponent(tokenData.token_code)}&dept_id=${tokenData.dept_id}&age=${isOwnToken ? (bookingInfo?.age || tokenData.age || 30) : (tokenData.age || 30)}&symptoms=${encodeURIComponent(tokenData.symptoms || '')}&name=${encodeURIComponent(isOwnToken ? (bookingInfo?.patientName || '') : '')}`)}
               disabled={!tokenData}
               className="w-full flex items-center justify-between font-bold rounded-2xl transition-all"
               style={{

@@ -118,12 +118,16 @@ export default function Bookings() {
     .then(data => {
       setLoading(false)
       // Store booking info for queue tracker
-      const hospitalName = hospitals.find(h => String(h.hospital_id) === String(selectedHospital))?.name || ''
+      const hospitalName = data.hospital_name
+        || hospitals.find(h => String(h.hospital_id) === String(selectedHospital))?.name
+        || ''
       localStorage.setItem('mediflow_last_booking', JSON.stringify({
         token: data.token_code,
         patientName: formData.name,
         age: formData.age,
         hospitalName,
+        hospitalId: data.hospital_id || selectedHospital,
+        deptId: selectedDept,
       }))
       setPopup({ type: 'success', title: 'Token Booked!', message: 'Your token has been confirmed.', token: data.token_code })
     })

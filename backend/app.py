@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
 import random
+import hashlib
 from database import init_db, get_connection
 from ai_engine import (
     generate_ai_json,
@@ -196,21 +197,29 @@ def book_token():
         # Doctor
         doctor_name = suggest_doctor(dept_id)
         cur.execute(
-            "SELECT doctor_id FROM doctors WHERE name = ? AND dept_id = ?",
+            "SELECT doctor_id FROM doctors WHERE doctor_name = ? AND dept_id = ?",
             (doctor_name, dept_id)
         )
         doc_row   = cur.fetchone()
         doctor_id = doc_row["doctor_id"] if doc_row else None
 
-        # Token number — A000 to A199
+        # Token number — random-looking in A000-A199 range
+        # Use a per-dept deterministic base (50-180) so tokens look like A153, A090
+        # and increment sequentially from there
+        base = int(hashlib.md5(f"dept_{dept_id}".encode()).hexdigest(), 16) % 130 + 50
         cur.execute("SELECT COUNT(*) as cnt FROM tokens WHERE dept_id = ?", (dept_id,))
-        count        = cur.fetchone()["cnt"]
-        token_seq    = count % 200
+        total_count  = cur.fetchone()["cnt"]
+        token_seq    = (base + total_count) % 200
         token_number = f"A{token_seq:03d}"
 
         # Priority
         emergency, department, status, is_emergency = analyze_patient(symptoms, dept_id)
         priority = "emergency" if is_emergency else ("elderly" if age >= 60 else "normal")
+
+        # Fetch hospital name for response
+        cur.execute("SELECT hospital_name FROM hospitals WHERE hospital_id = ?", (hospital_id,))
+        hosp_row = cur.fetchone()
+        hospital_name_str = hosp_row["hospital_name"] if hosp_row else None
 
         cur.execute(
             "INSERT INTO tokens (user_id, hospital_id, dept_id, doctor_id, token_number, status, priority, symptoms) "
@@ -228,7 +237,8 @@ def book_token():
             "priority":     priority,
             "patient_name": patient_name,
             "age":          age,
-            "hospital_name": None,
+            "hospital_id":  hospital_id,
+            "hospital_name": hospital_name_str,
             "ai_report":    generate_ai_json(dept_id, token_number, symptoms, age),
         }), 201
     except Exception as e:
@@ -245,7 +255,7 @@ def get_token(token_val):
 
     query = """
         SELECT t.*, u.name as patient_name, u.age,
-               h.name as hospital_name
+               h.hospital_name as hospital_name
         FROM tokens t
         JOIN users u ON t.user_id = u.user_id
         JOIN hospitals h ON t.hospital_id = h.hospital_id
@@ -265,8 +275,8 @@ def get_token(token_val):
     token_dict["token_code"] = token_dict["token_number"]
 
     cur.execute(
-        "SELECT COUNT(*) as cnt FROM tokens WHERE dept_id = ? AND status = 'waiting' AND created_at < ?",
-        (token_dict["dept_id"], token_dict["created_at"])
+        "SELECT COUNT(*) as cnt FROM tokens WHERE dept_id = ? AND status = 'waiting' AND token_id < ?",
+        (token_dict["dept_id"], token_dict["token_id"])
     )
     token_dict["position"] = cur.fetchone()["cnt"]
     conn.close()
@@ -297,9 +307,16 @@ def list_hospitals():
     conn = get_connection()
     cur  = conn.cursor()
     cur.execute("""
-        SELECT h.hospital_id, h.name, h.location as address,
-               (SELECT COUNT(*) FROM tokens t WHERE t.hospital_id = h.hospital_id AND t.status = 'waiting') as total_waiting,
-               (SELECT COUNT(*) * 12 FROM tokens t WHERE t.hospital_id = h.hospital_id AND t.status = 'waiting') as estimated_wait
+        SELECT h.hospital_id,
+               h.hospital_name  AS name,
+               h.location       AS address,
+               h.emergency_available,
+               h.busyness_level,
+               h.avg_wait_time  AS base_wait,
+               (SELECT COUNT(*) FROM tokens t
+                WHERE t.hospital_id = h.hospital_id AND t.status = 'waiting') AS total_waiting,
+               (SELECT COUNT(*) * 12 FROM tokens t
+                WHERE t.hospital_id = h.hospital_id AND t.status = 'waiting') AS estimated_wait
         FROM hospitals h
     """)
     hospitals = [dict(r) for r in cur.fetchall()]
@@ -381,12 +398,15 @@ def list_doctors():
     conn = get_connection()
     cur  = conn.cursor()
     cur.execute("""
-        SELECT dr.doctor_id, dr.name, dr.available, dr.shift_start, dr.shift_end,
-               d.dept_name as department
+        SELECT dr.doctor_id, dr.doctor_name AS name, dr.specialization,
+               dr.patients_today, dr.availability,
+               d.dept_name AS department
         FROM doctors dr
         JOIN departments d ON dr.dept_id = d.dept_id
         WHERE d.hospital_id = ?
-        ORDER BY dr.available DESC, dr.name ASC
+        ORDER BY
+            CASE dr.availability WHEN 'Available' THEN 0 ELSE 1 END,
+            dr.doctor_name ASC
     """, (hospital_id,))
     doctors = [dict(r) for r in cur.fetchall()]
     conn.close()
@@ -476,13 +496,170 @@ def token_position():
 
 
 # ─────────────────────────────────────────────────────────
+# 21. SYMPTOMS HISTORY
+# ─────────────────────────────────────────────────────────
+@app.route('/api/symptoms-history', methods=['GET'])
+def symptoms_history():
+    try:
+        user_id = request.args.get('user_id', type=int)
+        conn = get_connection()
+        cur  = conn.cursor()
+        if user_id:
+            cur.execute(
+                "SELECT * FROM symptoms_history WHERE user_id = ? ORDER BY visit_date DESC",
+                (user_id,)
+            )
+        else:
+            cur.execute("SELECT * FROM symptoms_history ORDER BY visit_date DESC LIMIT 50")
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route('/api/symptoms-history', methods=['POST'])
+def add_symptoms_history():
+    try:
+        data = request.json or {}
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute(
+            "INSERT INTO symptoms_history (user_id, symptoms, severity_score, "
+            "predicted_department, visit_date) VALUES (?,?,?,?,?)",
+            (data.get('user_id'), data.get('symptoms'), data.get('severity_score'),
+             data.get('predicted_department'), data.get('visit_date', datetime.now().strftime('%Y-%m-%d')))
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "ok", "id": cur.lastrowid}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────────────────
+# 22. EMERGENCY CASES
+# ─────────────────────────────────────────────────────────
+@app.route('/api/emergency-cases', methods=['GET'])
+def emergency_cases():
+    try:
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute("""
+            SELECT ec.*, t.token_number, u.name as patient_name
+            FROM emergency_cases ec
+            JOIN tokens t ON ec.token_id = t.token_id
+            JOIN users  u ON t.user_id   = u.user_id
+            ORDER BY ec.case_id DESC LIMIT 50
+        """)
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+# ─────────────────────────────────────────────────────────
+# 23. APPOINTMENTS
+# ─────────────────────────────────────────────────────────
+@app.route('/api/appointments', methods=['GET'])
+def get_appointments():
+    try:
+        user_id = request.args.get('user_id', type=int)
+        conn = get_connection()
+        cur  = conn.cursor()
+        if user_id:
+            cur.execute("""
+                SELECT a.*, u.name as patient_name, d.doctor_name
+                FROM appointments a
+                JOIN users   u ON a.user_id   = u.user_id
+                JOIN doctors d ON a.doctor_id = d.doctor_id
+                WHERE a.user_id = ?
+                ORDER BY a.appointment_date, a.appointment_time
+            """, (user_id,))
+        else:
+            cur.execute("""
+                SELECT a.*, u.name as patient_name, d.doctor_name
+                FROM appointments a
+                JOIN users   u ON a.user_id   = u.user_id
+                JOIN doctors d ON a.doctor_id = d.doctor_id
+                ORDER BY a.appointment_date, a.appointment_time
+            """)
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route('/api/appointments', methods=['POST'])
+def book_appointment():
+    try:
+        data = request.json or {}
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute(
+            "INSERT INTO appointments (user_id, doctor_id, appointment_date, "
+            "appointment_time, status) VALUES (?,?,?,?,?)",
+            (data.get('user_id'), data.get('doctor_id'),
+             data.get('appointment_date'), data.get('appointment_time'),
+             data.get('status', 'Booked'))
+        )
+        conn.commit()
+        appt_id = cur.lastrowid
+        conn.close()
+        return jsonify({"status": "ok", "appointment_id": appt_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────────────────
+# 24. FEEDBACK
+# ─────────────────────────────────────────────────────────
+@app.route('/api/feedback', methods=['GET'])
+def get_feedback():
+    try:
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute("""
+            SELECT f.*, u.name as patient_name
+            FROM feedback f
+            JOIN users u ON f.user_id = u.user_id
+            ORDER BY f.created_at DESC LIMIT 50
+        """)
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route('/api/feedback', methods=['POST'])
+def submit_feedback():
+    try:
+        data = request.json or {}
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute(
+            "INSERT INTO feedback (user_id, rating, feedback_text, created_at) VALUES (?,?,?,?)",
+            (data.get('user_id'), data.get('rating'), data.get('feedback_text'),
+             datetime.now().strftime('%Y-%m-%d'))
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "ok"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────────────────
 # HOME
 # ─────────────────────────────────────────────────────────
 @app.route('/')
 def home():
     return jsonify({
         "project": "MediFlow AI",
-        "version": "1.0",
+        "version": "1.2",
         "status":  "Running",
         "apis": [
             "/api/ai-report", "/api/wait-time", "/api/crowd-info",
@@ -493,6 +670,8 @@ def home():
             "/api/departments/overview", "/api/doctors",
             "/api/live-status", "/api/alerts", "/api/health",
             "/api/priority", "/api/position",
+            "/api/symptoms-history", "/api/emergency-cases",
+            "/api/appointments", "/api/feedback",
         ]
     })
 
