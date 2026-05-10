@@ -3,7 +3,7 @@ AI Engine — MediFlow AI
 Merged: original relational logic + updated AI scoring from ai_updated.py
 """
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime
 import random
 from database import get_connection
 
@@ -281,8 +281,6 @@ def generate_ai_json(dept_id, token, symptoms, age):
 
     # New fields from ai_updated
     position = get_position(dept_id, token) if token else -1
-    eta_time = datetime.now() + timedelta(minutes=wait_time)
-    eta_str = eta_time.strftime("%I:%M %p")
     explanation = f"{queue_len} patients ahead × {consult_time} mins consultation"
     priority_score = compute_priority_score(age, symptoms or "", wait_time, emergency)
 
@@ -305,7 +303,6 @@ def generate_ai_json(dept_id, token, symptoms, age):
         # New enriched fields
         "explanation":        explanation,
         "position":           position,
-        "estimated_arrival":  eta_str,
         "priority_score":     priority_score,
         "queue_length":       queue_len,
         "consult_time":       consult_time,

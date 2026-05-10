@@ -250,13 +250,13 @@ export default function AISmartReport() {
                   )}
                 </div>
 
-                {/* ETA mini block */}
+                {/* ETA mini block — uses total_time (full journey) not just wait_time */}
                 <div className="rounded-2xl" style={{ background: '#0f1e3d', padding: '1rem 1.25rem' }}>
-                  <div className="font-bold font-mono mb-1" style={{ fontSize: 13, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#93c5fd' }}>Estimated Arrival</div>
+                  <div className="font-bold font-mono mb-1" style={{ fontSize: 13, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#93c5fd' }}>Estimated Departure</div>
                   <div className="font-extrabold font-mono" style={{ fontSize: 22, letterSpacing: '-1px', color: 'white' }}>
-                    {report.estimated_arrival || (() => { const d = new Date(); d.setMinutes(d.getMinutes() + (report.wait_time || 0)); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })()}
+                    {(() => { const d = new Date(); d.setMinutes(d.getMinutes() + (report.total_time || report.wait_time || 0)); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })()}
                   </div>
-                  <div style={{ fontSize: 11, color: '#bfdbfe', marginTop: 2 }}>AI predicted · {report.total_time} min total</div>
+                  <div style={{ fontSize: 11, color: '#bfdbfe', marginTop: 2 }}>AI predicted · {report.total_time} min total journey</div>
                   {report.explanation && (
                     <div style={{ fontSize: 10, color: 'rgba(191,219,254,0.7)', marginTop: 4, fontFamily: 'DM Mono, monospace' }}>{report.explanation}</div>
                   )}
